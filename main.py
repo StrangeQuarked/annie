@@ -50,7 +50,7 @@ async def creators(ctx):
 
 @bot.command()
 async def selfcare(ctx):
-  await ctx.send("Please make sure you have hydrated, eaten sufficient food, moved around if you have been sitting for a while, slept if you are tired, taken any necessary medication and done any other actions needed to take care of yourself. Self-care is very important (even I know this and I'm a robot).")
+  await ctx.send("Please make sure you have hydrated, eaten sufficient food, moved around if you have been sitting for a while, slept if you are tired, taken any necessary medication and done any other actions needed to take care of yourself. Self-care is very important. I might be a robot but I still care about you :).")
 
 
 #things for livin
