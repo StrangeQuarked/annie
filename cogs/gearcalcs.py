@@ -10,6 +10,7 @@ class Gearcalcs(commands.Cog):
           "bdef": self.calcbdef,
           "bdx": self.calcbdef,
           "bpu": self.calcbpu,
+          "iru": self.calcrec,
           "ism": self.calcism,
           "iss": self.calciss,
           "mpu": self.calcmpu,
@@ -48,8 +49,6 @@ class Gearcalcs(commands.Cog):
     def calcAbilityEffects(self, AP, minimum, maximum, mid=0):#inputs are the number of AP and the minimum possible value of that ability (i.e the value at 0m0s) and the maximum possible value of the ability (the value at 3m9s). Use a gear calculator to get those and input them as the min and max.
       if mid == 0: #added mid value input since special saver has a mid value that is not the mean of the minimum and maximum values
         mid = (minimum + maximum)/2
-      else:
-        pass
       p = min(3.3 * AP - 0.027 * AP ** 2, 100)#p and s are the values that go into the interpolation function
       s = (mid - minimum)/(maximum - minimum)
       return(minimum + (maximum - minimum) * self.InterpolationFunction(p/100,s))
@@ -70,8 +69,8 @@ class Gearcalcs(commands.Cog):
             await ctx.send("Calculates the effects of Ink Resistance Up. Can be modified by Opening Gambit. Usage: `a.gearcalc res (amount) [og]`.")
           elif AP == "bdx" or AP == "bdef":
             await ctx.send("Calculates the effects of Bomb Defense Up. Usage: `a.gearcalc bdx (amount)`or `a.gearcalc bdef (amount)`.")
-          elif AP == "rec":
-            await ctx.send("Calculates the effects of Ink Recovery Up. Can be modified by Comeback or Last-Ditch Effort. Usage: `a.gearcalc res (amount) [cbk/lde]`.")
+          elif AP == "rec" or AP == "iru":
+            await ctx.send("Calculates the effects of Ink Recovery Up. Can be modified by Comeback or Last-Ditch Effort and/or if given weapon is the Splattershot Jr. Usage: `a.gearcalc res (amount) [cbk/lde] [jr]`.")
           elif AP == "scu":
             await ctx.send("Calculates the special cost given the original special cost. Can be modified by Comeback. Usage: `a.gearcalc scu (amount) (original special cost) [cbk]`.")
           elif AP == "ss":
@@ -94,12 +93,12 @@ class Gearcalcs(commands.Cog):
           await ctx.send("The `gearcalc` command calculates the effects of an amount of an ability inputted. Usage: `a.gearcalc (ability) (amount) [modifier if applicable] [modifier if applicable]`. Amount must be in 0m0s format. Example: 1m2s, for 1 main 2 subs.\n Use `a.weaponglossary` for accepted weapon names, `a.abilityglossary` for accepted ability names and `a.subspecialglossary` for accepted sub and special weapon names.")
       #elif AP == "0m0s":
           #await ctx.send("Error! Invalid ability amount entered. Amount must be in 0m0s format. Example: 1m2s, for 1 main 2 subs.")
-      elif ability == "spu" or ability == "bpu" or ability == "mpu" or ability == "res" or ability == "rec":
-        try:
+      elif ability == "spu" or ability == "bpu" or ability == "mpu" or ability == "res":
+        #try:
           await ctx.send(self.abilitydict[ability](ctx, AP,AdditionalInput))
-        except:
-          await ctx.send("Error: Invalid ability or ability amount entered. Use `a.gearcalc help` for formatting help.")
-      elif ability == "ssu" or ability == "iss" or ability == "ism" or ability == "rsu" or ability == "scu":
+        #except:
+         # await ctx.send("Error: Invalid ability or ability amount entered. Use `a.gearcalc help` for formatting help.")
+      elif ability == "ssu" or ability == "iss" or ability == "ism" or ability == "rsu" or ability == "scu" or ability == "rec" or ability == "iru":
         try:
           await ctx.send(self.abilitydict[ability](ctx, AP, AdditionalInput, AdditionalInput2))
         except:
@@ -128,7 +127,10 @@ class Gearcalcs(commands.Cog):
       "Burst Bomb (near)": 35,
       "Burst Bomb (far)": 25,
       "Ink Mine (near)": 45,
-      "Ink Mine (far)": 35}
+      "Ink Mine (far)": 35,
+      "Torpedo (near)": 60,
+      "Torpedo (far)": 35,
+      "Torpedo (droplets)": 12}
 
       specials = {
         "Tenta missiles (hit)" : [150,100],
@@ -191,7 +193,7 @@ class Gearcalcs(commands.Cog):
       PercentChange = self.calcPctChange(SpecialCost, NewSpecialCost)
       return "Special Cost: {}p, {}% change.".format(round(NewSpecialCost,2), round(PercentChange, 2))
   
-    def calcrec(self, ctx, AP, modifier=""):#calculates time to recover ink tank given an amount of ability points
+    def calcrec(self, ctx, AP, modifier="", jr=""):#calculates time to recover ink tank given an amount of ability points
       if modifier == "comeback" or modifier == "cbk":
         AP = self.calcAP(AP) + 10
       elif modifier == "last-ditch-effort" or modifier == "lde":
@@ -200,10 +202,15 @@ class Gearcalcs(commands.Cog):
         AP = self.calcAP(AP)
       if AP > 57:#to avoid AP values going over the maximum possible in game
         AP = 57
-      kid = self.calcAbilityEffects(AP, 10, 3.67)#units in seconds to recover ink tank fully
-      squid = self.calcAbilityEffects(AP, 3, 1.95)
+      if modifier == "jr" or jr == "jr":
+        kid = self.calcAbilityEffects(AP, 11, 4.05)#(time to recover ink in squid/kid form in frames * percentage of that respective form in inkipedia) / 60 (because it's frames) -c
+        squid = self.calcAbilityEffects(AP, 3.32, 2.15)
+      else:
+        kid = self.calcAbilityEffects(AP, 10, 3.67)#units in seconds to recover ink tank fully
+        squid = self.calcAbilityEffects(AP, 3, 1.95)
       kidpctchange = self.calcPctChange(10, kid)
       squidpctchange = self.calcPctChange(3, squid)
+      #return f"modifier: {modifier}. jr: {jr}. squid: {squid}. kid: {kid}. kid & squid pct change: {kidpctchange}, {squidpctchange}"
       return f"Full tank recovery time: {round(kid, 2)} seconds out of ink ({round(kidpctchange, 2)}% change), {round(squid, 2)} seconds submerged in ink ({round(squidpctchange, 2)}% change)"
 
     def calcinkres(self, ctx, AP, OpeningGambit=""): #calculates the effects of ink resistance given an amount of ability points  
@@ -495,13 +502,13 @@ class Gearcalcs(commands.Cog):
         "autobomb": [49.5, 34.65],
         "curling-bomb": [70, 45.5],
         "fizzy-bomb": [60, 42],
-        "torpedo": [58.5, 38.025],
+        "torpedo": [65, 42.25],
         "toxic-mist": [60, 42],
         "sensor": [45, 31.5],
         "mine": [60, 36],
         "wall": [60, 39],
         "sprinkler": [60, 36],
-        "beakon": [75, 45]}
+        "beakon": [75, 45],}
       if modifier == "comeback" or modifier == "cbk":
         AP = self.calcAP(AP) + 10
       elif modifier == "last-ditch-effort" or modifier == "lde":
@@ -513,7 +520,7 @@ class Gearcalcs(commands.Cog):
 
       SubCost = self.calcAbilityEffects(AP, SubWeapons[SubType][0], SubWeapons[SubType][1])
       NumberBombs = int(100/SubCost)
-      return(f"Sub weapon cost: {SubCost}% of ink tank. {NumberBombs} bombs.")
+      return(f"Sub weapon cost: {round(SubCost, 2)}% of ink tank. {NumberBombs} bomb(s).")
     
     def calcism(self, ctx, AP, weapon, modifier=""):
       if modifier == "comeback" or modifier == "cbk":
@@ -601,6 +608,7 @@ class Gearcalcs(commands.Cog):
         return f"Number of full charges with {weapon}: {shots}."
       else:
         return f"Number of shots with {weapon}: {shots}."
+    
     def calcmpu(self, ctx, AP, Weapon):
       DamageBuffWeapons = {
         "sploosh": [38, 47.5],#units in damage dealt
@@ -676,7 +684,7 @@ class Gearcalcs(commands.Cog):
         Painting = self.calcAbilityEffects(AP, PaintingBuffWeapons[Weapon][0], PaintingBuffWeapons[Weapon][1])
         return(f"Painting ability: {round(Painting,2)}% of base painting ability.")
       elif Weapon in list(NonTentBrellas.keys()):
-        CanopyRegenTime = self.calcAbilityEffects(AP, NonTentBrellas[Weapon][0], NonTentBrellas[Weapon][0]) 
+        CanopyRegenTime = self.calcAbilityEffects(AP, NonTentBrellas[Weapon][0], NonTentBrellas[Weapon][1]) 
         pctchange = round(self.calcPctChange(NonTentBrellas[Weapon][0], CanopyRegenTime),2)
         return(f"Canopy regeneration time: {round(CanopyRegenTime,2)} seconds ({pctchange}% change).")
       elif Weapon in list(HeavyNautMini.keys()):#can you check this line i can't see anything wrong - quark --done -c
@@ -743,6 +751,10 @@ class Gearcalcs(commands.Cog):
         PartialChargeMaxDamage = self.calcAbilityEffects(AP, 32, 33.3)
         pctchange2 = round(self.calcPctChange(32, PartialChargeMaxDamage),2)
         return(f"Partial charge minimum damage: {round(PartialChargeMinDamage,2)} ({pctchange1}% change). Partial charge max damage: {round(PartialChargeMaxDamage,2)} ({pctchange2}% change).")
+      elif Weapon == "jet":
+        ShotSpread = round(self.calcAbilityEffects(AP, 100, 70),2)
+        ShotRangeVelocity = round(self.calcAbilityEffects(AP, 100, 108.46),2)
+        return(f"Ground shot randomization: {ShotSpread}% of base value. Range and bullet velocity: {ShotRangeVelocity}% of base value.")
       else:
         return("Invalid weapon name entered. Use a.weaponglossary for a list of weapon names.")
     
