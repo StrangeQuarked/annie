@@ -76,7 +76,7 @@ class Gearcalcs(commands.Cog):
           elif AP == "ss":
             await ctx.send("Calculates the percentage of the special meter saved. Usage: `a.gearcalc scu (amount).")
           elif AP == "iss":
-            await ctx.send("Calculates the percentage of the ink tank consumed by a sub weapon. Can be modified by Comeback and Last Ditch Effort. Usage: `a.gearcalc (amount) (sub weapon) [cbk/lde]. Use `a.subspecialglossary` for a list of valid sub weapon names.")
+            await ctx.send("Calculates the percentage of the ink tank consumed by a sub weapon. Can be modified by Comeback and Last Ditch Effort. Usage: `a.gearcalc (amount) (sub weapon) [cbk/lde]`. Use `a.subspecialglossary` for a list of valid sub weapon names.")
           elif AP == "ism":
             await ctx.send("Calculates the effects of Ink Saver Main given a weapon. Can be modified by Comeback or Last-Ditch Effort. Usage: `a.gearcalc ism (amount) (weapon) [cbk/lde]`.")
           elif AP == "rsu":
@@ -496,10 +496,10 @@ class Gearcalcs(commands.Cog):
     
     def calciss(self, ctx, AP, SubType, modifier=""):#modifiers are lde and comeback
       SubWeapons = {
-        "splat-bomb": [63, 40.95],#units in % of ink tank used
+        "splat-bomb": [70, 45.5],#units in % of ink tank used
         "burst-bomb": [40, 32],
         "suction-bomb": [70, 45.5],
-        "autobomb": [49.5, 34.65],
+        "autobomb": [55, 38.5],
         "curling-bomb": [70, 45.5],
         "fizzy-bomb": [60, 42],
         "torpedo": [65, 42.25],
@@ -520,7 +520,16 @@ class Gearcalcs(commands.Cog):
 
       SubCost = self.calcAbilityEffects(AP, SubWeapons[SubType][0], SubWeapons[SubType][1])
       NumberBombs = int(100/SubCost)
-      return(f"Sub weapon cost: {round(SubCost, 2)}% of ink tank. {NumberBombs} bomb(s).")
+      output = f"Sub weapon cost: {round(SubCost, 2)}% of ink tank, {NumberBombs} bomb(s)."
+      if SubType == "splat-bomb" or SubType == "autobomb" or SubType == "torpedo":
+        SubCostsJr = {
+          "splat-bomb": [63.63636, 41.36364],
+          "autobomb": [50, 35],
+          "torpedo": [59.09091, 38.40909]
+          }
+        SubCostJr = self.calcAbilityEffects(AP, SubCostsJr[SubType][0], SubCostsJr[SubType][1])
+        output += f" {round(SubCostJr, 2)}% of ink tank, {int(100/SubCostJr)} bombs with Splattershot Jr."
+      return(output)
     
     def calcism(self, ctx, AP, weapon, modifier=""):
       if modifier == "comeback" or modifier == "cbk":
@@ -581,9 +590,9 @@ class Gearcalcs(commands.Cog):
       "ballpoint": 25,
       "hydra": 35,}
       highink = ["dynamo", "eliter", "h-3", "hydra", "luna", "pro", "tent"]
-      chargers = ["bamboozler", "squiffer", "gootuber", "nautilus", "mini", "charger","heavy", "eliter", "ballpoint", "hydra"]
+      chargers = ["bamboozler", "squiffer", "gootuber", "nautilus", "mini", "charger", "heavy", "eliter", "ballpoint", "hydra"]
       if weapon not in list(weapons.keys()):
-        return "Invalid weapon name entered. Use a.weaponglossary for a list of weapon names."
+        return "Invalid weapon name entered. Use `a.weaponglossary` for a list of weapon names."
       elif weapon in highink:
         percdif = (0.99 * AP - (0.09 * AP)**2 ) / 60
       else:
@@ -593,6 +602,9 @@ class Gearcalcs(commands.Cog):
         shots1 = int(100/inkcons1)
         inkcons2 = weapons[weapon][1] * (1 - percdif)
         shots2 = int(100/inkcons2)
+      elif weapon == "jr":
+        inkcons = weapons[weapon] * (1 - percdif)
+        shots = int((100/inkcons) * 1.1)
       else:
         inkcons = weapons[weapon] * (1 - percdif)
         shots = int(100/inkcons)
