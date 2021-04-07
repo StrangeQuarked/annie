@@ -262,7 +262,6 @@ class Gearcalcs(commands.Cog):
       if AP > 57:
         AP = 57
       specials = ["baller", "curling-launcher", "suction-launcher", "splat-launcher", "autobomb-launcher", "burst-launcher", "booyah", "bubbles", "inkjet", "armor", "storm", "rain", "missiles", "ray", "stamp", "splashdown"]#rain and storm are the same thing both are used commonly enough that it makes sense to have both
-      baseM = {"curling-launcher": 90, "suction-launcher": 90, "splat-launcher": 90, "inkjet": 240, "armor": 80, "storm": 120, "ray": 120}
       if specialtype not in specials:
         return "Error: Invalid special type entered."
       else:
@@ -283,25 +282,18 @@ class Gearcalcs(commands.Cog):
           RayDuration = self.calcAbilityEffects(AP, 7.75, 9.75)#units are seconds
           pctchange = self.calcPctChange(7.75, RayDuration)
           return(f"Sting Ray Duration: {round(RayDuration,2)} seconds, increase of {round(RayDuration - 7.75, 2)} from base duration of 7.75 seconds ({round(pctchange,2)}% change).")
-        elif specialtype in list(baseM.keys()): #if it's a duration special
-          try:
-            percdif = (0.99 * AP - (0.09 * AP)**2 ) / baseM[specialtype]
-            duration = 8 * (1 + percdif)
-          except:
-            return "Invalid special entered."
-          if specialtype == "inkjet":
-            frames = 480 * (1 + percdif)
-            numshots = int((frames - 48) / 60+1)
-            return f"Duration: {round(duration, 2)} seconds. {numshots} shots."
-          elif "launcher" in specialtype: #if it's a bomb launcher
-            if specialtype == "curling-launcher" or specialtype == "suction-launcher" or specialtype == "splat-launcher" or specialtype == "autobomb-launcher" or specialtype == "burst-launcher":
-              duration = 6 * (1 + percdif)
-              frames = 360 * (1 + percdif)
-              numbombs = int((frames - 17) / 30+1)
-              return f"Duration: {round(duration, 2)} seconds. {numbombs} bombs."
-            else:
-              return "Invalid type of bomb launcher entered. Valid types: curling-launcher, suction-launcher, splat-launcher, autobomb-launcher, burst-launcher. Hyphen required." # need to move to top, before not in specials
-          return f"Duration: {round(duration, 2)} seconds." # if it's not inkjet or bomb launcher
+        elif specialtype == "inkjet":
+            duration = self.calcAbilityEffects(AP, 7.5, 8.5)#units are seconds
+            pctchange = round(self.calcPctChange(7.5, duration))
+            return f"Duration: {round(duration, 2)} seconds ({pctchange}% change)."
+        elif specialtype == "suction-launcher" or specialtype == "splat-launcher" or specialtype == "burst-launcher" or specialtype == "autobomb-launcher":
+          duration = self.calcAbilityEffects(AP, 6, 8)#units in seconds
+          pctchange = round(self.calcPctChange(6, duration))
+          return(f"Bomb launcher duration: {round(duration,2)} seconds ({pctchange}% change).")
+        elif specialtype == "curling-launcher":
+          duration = self.calcAbilityEffects(AP, 6.67, 8.67)
+          pctchange = round(self.calcPctChange(6.67, duration))
+          return(f"Bomb launcher duration {round(duration,2)} seconds ({pctchange}% change).")
         elif specialtype == "booyah":
           ChargeTime = self.calcAbilityEffects(AP, 8.483, 8.415)#units are seconds
           pctchange = self.calcPctChange(8.483, ChargeTime)
