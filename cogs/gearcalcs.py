@@ -232,23 +232,13 @@ class Gearcalcs(commands.Cog):
         return(f"Run speed in enemy ink: {round(RunSpeedEnemyInk, 2)} distance units per frame ({pctchange}% change).\nDamage per second in enemy ink: {round(DamagePerSecond,2)} hp ({pctchange2}% change).\nDamage limit in enemy ink: {round(DamageLimit,2)} hp ({pctchange3}% change).\nInvulnerability time in enemy ink: {round(InvinsTime,2)} seconds.\nJump height in enemy ink: {round(JumpHeight,2)} ({pctchange4}% change).")
 
     def calcqr(self, ctx, AP):
-        AP = self.calcAP(AP)
-        if AP > 57:
-          AP = 57
-        kpercdif = (0.99 * AP - (0.09 * AP)**2 ) / 45
-        kframes = 30 + 120 + 360 * (1 - kpercdif)
-        ksecs = kframes / 59.94 
-        result = f"Respawn from death to enemy: {round(kframes, 2)} frames, {round(ksecs, 2)} seconds, {round(kpercdif * 100, 2)}% change."
-        if AP > 12:
-            B = AP - 12
-            dpercdif = (0.99 *B - (0.09 * B)**2 ) / 30
-            dframes = 120 + 120 + 180 * (1 - dpercdif)
-            dsecs = dframes / 59.94
-            fframes = 30 + 120 + 180 * (1-dpercdif)
-            fsecs = fframes / 59.94
-            result += f"\nRespawn from drowning: {round(dframes, 2)} frames, {round(dsecs, 2)} seconds\nRespawn from falling off stage: {round(fframes, 2)} frames, {round(fsecs, 2)} seconds"
-        return result
-    
+      AP = self.calcAP(AP)
+      if AP > 57:
+        AP = 57
+      RespawnTime = self.calcAbilityEffects(AP, 8.5, 4.5)
+      pctchange = round(self.calcPctChange(8.5, RespawnTime))
+      return(f"Respawn time: {round(RespawnTime, 2)} seconds ({pctchange}% change).")
+
     def calcqsj(self, ctx, AP):
       AP = self.calcAP(AP)
       if AP > 57:
