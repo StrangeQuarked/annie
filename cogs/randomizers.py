@@ -1,6 +1,6 @@
 import random
 from discord.ext import commands
-
+from cogs import mapweights
 class Randomizers(commands.Cog):
   def __init__(self, bot):
     self.bot = bot
@@ -25,17 +25,28 @@ class Randomizers(commands.Cog):
       await ctx.send('Selected Mode: {}'.format(gen))
 
   @commands.command()
-  async def maplist(self, ctx, amount=1):#generates a random maplist 
+  async def maplist(self, ctx, amount=1, pool=""):#generates a random maplist
     if amount >= 60:
       await ctx.send("Too many maps. Maximum maplist size of 59")
     else:
-    
         CreatedList = []
-        for x in range(amount):
-          genmode = self.modes[random.randint(0, len(self.modes) - 1)]
-          genmap = self.maps[random.randint(0, len(self.maps) - 1)]
-          CreatedList.append(genmode + " on " + genmap)
-          #CreatedList.append(modes[random.randint(0,3)] + " on " + maps[random.randint(0, len(maps))])#hardcoded mode's range because only ranked modes are gonna be used anyway
+        if pool == "syzygy":
+          maps = random.choices(self.maps, weights=self.mapweights["syzygy"], k=amount)
+          for x in range(amount):
+            genmode = self.modes[random.randint(0, len(self.modes) - 1)]
+            CreatedList.append(genmode + " on " + maps[x-1])
+        elif pool == "cursed":
+          maps = random.choices(self.maps, weights=self.mapweights["cursed"], k=amount)
+          for x in range(amount):
+            genmode = self.modes[random.randint(0, len(self.modes) - 1)]
+            CreatedList.append(genmode + " on " + maps[x-1])
+        elif pool == "quark":
+          CreatedList = random.choices(mapweights.MapModes,weights=mapweights.Quark,k=amount)
+        else:
+          for x in range(amount):
+            genmode = self.modes[random.randint(0, len(self.modes) - 1)]
+            genmap = self.maps[random.randint(0, len(self.maps) - 1)]
+            CreatedList.append(genmode + " on " + genmap)
         result = "```"
         for index in range(len(CreatedList)):
           result += f"{index + 1}. {CreatedList[index]}\n"
